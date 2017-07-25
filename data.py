@@ -15,12 +15,11 @@ from sklearn.neural_network import MLPClassifier
 from sklearn import metrics
 from sklearn.metrics import f1_score
 from sklearn import model_selection
-from sklearn import grid_search
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, f_classif, chi2
 from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import PCA
-
+from sklearn.model_selection import train_test_split
 
 data = pd.read_csv("wdbc.csv")
 print data.shape
@@ -40,73 +39,64 @@ print "The percentage of malignant cases is: {:.4f}%".format(rate)
 
 data.diagnosis.unique()
 
-data.drop('id',axis=1,inplace=True)
-print data.head(1)
+data.drop('id',axis=1,inplace=True)     #drop useless feature
+# print data.head(1)
 features = list(data.columns[1:31])
-print features
+# print features
 label = data.columns[0:1]
+print "Features:"
+print features
+print "labels: "
 print label
 
 X = data[features]
 Y = data[label]
-print "\nFeature values:"
-print X.head(1)
-print "\nTarget values:"
-print Y.head(1)
+# print "\nFeature values:"
+# print X.head(1)
+# print "\nTarget values:"
+# print Y.head(1)
 
 
-df=pd.DataFrame(data)
-fig, ax = plt.subplots(1)
-for i in range(1):
-    x=df['perimeter_mean']
-    y=df['area_worst']
-    ax.scatter(x,y, label=str(i))
-
-ax.set_title('Correlation of perimeter_mean and area_worst')
-fig.savefig('scatter1.png')
-fig, ax = plt.subplots(1)
-for i in range(1):
-    x=df['concavity_mean']
-    y=df['compactness_worst']
-    ax.scatter(x,y, label=str(i))
-ax.set_title('Correlation of concavity_mean and compactness_worst')
-fig.savefig('scatter2.png')
-
-
-def preprocess_features(X):
+# df=pd.DataFrame(data)         # looking for correlation and show them as picture
+# fig, ax = plt.subplots(1)
+# for i in range(1):
+#     x=df['perimeter_mean']
+#     y=df['area_worst']
+#     ax.scatter(x,y, label=str(i))
+#
+# ax.set_title('Correlation of perimeter_mean and area_worst')
+# fig.savefig('scatter1.png')
+# fig, ax = plt.subplots(1)
+# for i in range(1):
+#     x=df['concavity_mean']
+#     y=df['compactness_worst']
+#     ax.scatter(x,y, label=str(i))
+# ax.set_title('Correlation of concavity_mean and compactness_worst')
+# fig.savefig('scatter2.png')
 
 
+def preprocess_features(X):     # pre-process: using pandas and replace non-digital feature/label
     output = pd.DataFrame(index = X.index)
     for col, col_data in X.iteritems():
-
-
         if col_data.dtype == object:
             col_data = col_data.replace(['M', 'B'], [1, 0])
-
         # Collect the revised columns
         output = output.join(col_data)
-
-    #out = X[0].replace(['M', 'B'], [1, 0])
-
     return output
 
 X = preprocess_features(X)
-#X=Normalizer().fit_transform(X)
-pca = PCA( n_components=15, copy=True, whiten=False)
-X=pca.fit_transform(X)
+# X=Normalizer().fit_transform(X)
+# pca = PCA( n_components=5, copy=True, whiten=False)        # Dimensionality reduction  , svd_solver='full'
+# X = pca.fit_transform(X)
+print "shape of X after dimensionality reduction:"+str(X.shape)
 Y = preprocess_features(Y)
-print X.shape
 
 
-
-
-from sklearn.cross_validation import train_test_split
-nr_train = 400
+nr_train = 400                  #split train and test set
 nr_test = X.shape[0] - nr_train
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=nr_test, random_state=40)
 print "Training set has {} samples.".format(X_train.shape[0])
 print "Testing set has {} samples.".format(X_test.shape[0])
-
 
 
 def feature_select(X_train, X_test, y_train, n_feat='all'):
@@ -128,8 +118,8 @@ def feature_select(X_train, X_test, y_train, n_feat='all'):
 
     # Score Function Attributes
     scores =  score_func.scores_
-    pvals = score_func.pvalues_
-    return (select_X_train, select_X_test, scores, pvals)
+    pvalues = score_func.pvalues_
+    return (select_X_train, select_X_test, scores, pvalues)
 
 # train
 def train_classifier(clf, X_train, Y_train):
@@ -262,23 +252,25 @@ clf_E = RandomForestClassifier(n_estimators=10,max_features= 3, criterion='gini'
 clf_I = MLPClassifier(activation='tanh',alpha=0.01)
 
 
-#feature selection
-# select_X_train, select_X_test, score, pval = feature_select(X_train, X_test, Y_train)
-# feat_names = list(data.columns)[:-1]
-#
-# print "Feature Selection"
-# fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, name='score'),
-#                                pd.Series(pval, name='pval')],
-#                               axis=1)
-# print fselect_score.sort_values('score', ascending=False), '\n'
+# feature selection
+select_X_train, select_X_test, score, pvalues = feature_select(X_train, X_test, Y_train)
+feat_names = list(data.columns)[:-1]
 
+print "Feature Selection"
+fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, name='score'),
+                               pd.Series(pvalues, name='pvalue')],axis=1)
+print fselect_score.sort_values('score', ascending=False), '\n'
 
-for clf in [clf_A, clf_B, clf_C, clf_D, clf_E, clf_I]:
-    for size in [400]:
-        train_predict(clf, X_train[:size], Y_train[:size], X_test, Y_test)
-        print ' '
-        if clf == clf_I:
-            plot_roc_pp(clf, X_test, Y_test, 31, name= "{}".format(clf.__class__.__name__))
+print "shape of selected Features"
+print select_X_test.shape           ##没变？
+
+# clf_A, clf_B, clf_C, clf_D, clf_E,
+# for clf in [ clf_D]:
+#     for size in [400]:
+#         train_predict(clf, X_train[:size], Y_train[:size], X_test, Y_test)
+#         print ' '
+        # if clf == clf_I:
+        #     plot_roc_pp(clf, X_test, Y_test, 31, name= "{}".format(clf.__class__.__name__))
 
 
 
