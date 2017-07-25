@@ -262,7 +262,7 @@ fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, 
 print fselect_score.sort_values('score', ascending=False), '\n'
 
 print "shape of selected Features"
-print select_X_test.shape           ##没变？
+print select_X_test.shape           ##没变
 
 # clf_A, clf_B, clf_C, clf_D, clf_E,
 # for clf in [ clf_D]:
