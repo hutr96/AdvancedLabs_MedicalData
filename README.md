@@ -1,4 +1,4 @@
-# Course Design Project
+# Advanced Labs Project
 ## a compulsory course directed by Professor Hongyan Cui
 **This is a practice project about data processing and machine learning.**
 * Collect datasets about medical
