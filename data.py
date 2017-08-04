@@ -101,8 +101,8 @@ print "Training set has {} samples.".format(X_train.shape[0])
 print "Testing set has {} samples.".format(X_test.shape[0])
 
 # using LDA for dimensionality reduction
-lda = LinearDiscriminantAnalysis(n_components=2)
-X_train = lda.fit_transform(X_train,Y_train)
+lda = LinearDiscriminantAnalysis(n_components=5)
+X_train = lda.fit(X_train,Y_train).transform(X_train)
 X_test = lda.transform(X_test)
 print "shape of X_train after dimensionality reduction:"+str(X_train.shape)
 print "shape of X_test after dimensionality reduction:"+str(X_test.shape)
