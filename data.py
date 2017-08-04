@@ -10,7 +10,8 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.neural_network import MLPClassifier
 from sklearn import metrics
 from sklearn.metrics import f1_score
@@ -85,18 +86,26 @@ def preprocess_features(X):     # pre-process: using pandas and replace non-digi
     return output
 
 X = preprocess_features(X)
+Y = preprocess_features(Y)
 # X=Normalizer().fit_transform(X)
 # pca = PCA( n_components=5, copy=True, whiten=False)        # Dimensionality reduction  , svd_solver='full'
 # X = pca.fit_transform(X)
-print "shape of X after dimensionality reduction:"+str(X.shape)
-Y = preprocess_features(Y)
+print "shape of X :"+str(X.shape)
 
 
-nr_train = 400                  #split train and test set
+# split train and test set
+nr_train = 400
 nr_test = X.shape[0] - nr_train
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=nr_test, random_state=40)
 print "Training set has {} samples.".format(X_train.shape[0])
 print "Testing set has {} samples.".format(X_test.shape[0])
+
+# using LDA for dimensionality reduction
+lda = LinearDiscriminantAnalysis(n_components=2)
+X_train = lda.fit_transform(X_train,Y_train)
+X_test = lda.transform(X_test)
+print "shape of X_train after dimensionality reduction:"+str(X_train.shape)
+print "shape of X_test after dimensionality reduction:"+str(X_test.shape)
 
 
 def feature_select(X_train, X_test, y_train, n_feat='all'):
@@ -251,24 +260,26 @@ clf_D = GaussianNB()
 clf_E = RandomForestClassifier(n_estimators=10,max_features= 3, criterion='gini')
 clf_I = MLPClassifier(activation='tanh',alpha=0.01)
 
+clf_H = QuadraticDiscriminantAnalysis()
 
-# feature selection
-select_X_train, select_X_test, score, pvalues = feature_select(X_train, X_test, Y_train)
-feat_names = list(data.columns)[:-1]
 
-print "Feature Selection"
-fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, name='score'),
-                               pd.Series(pvalues, name='pvalue')],axis=1)
-print fselect_score.sort_values('score', ascending=False), '\n'
+# feature selection     n_feat: Kbest
+# select_X_train, select_X_test, score, pvalues = feature_select(X_train, X_test, Y_train)
+# feat_names = list(data.columns)[:-1]
+#
+# print "Feature Selection"
+# fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, name='score'),
+#                                pd.Series(pvalues, name='pvalue')],axis=1)
+# print fselect_score.sort_values('score', ascending=False), '\n'
+#
+# print "shape of selected Features"
+# print select_X_train.shape
 
-print "shape of selected Features"
-print select_X_test.shape           ##没变
 
-# clf_A, clf_B, clf_C, clf_D, clf_E,
-# for clf in [ clf_D]:
-#     for size in [400]:
-#         train_predict(clf, X_train[:size], Y_train[:size], X_test, Y_test)
-#         print ' '
+for clf in [ clf_I]:    # clf_A, clf_B, clf_C, clf_D, clf_E,
+    for size in [400]:
+        train_predict(clf, X_train[:size], Y_train[:size], X_test, Y_test)  #select_
+        print ' '
         # if clf == clf_I:
         #     plot_roc_pp(clf, X_test, Y_test, 31, name= "{}".format(clf.__class__.__name__))
 
