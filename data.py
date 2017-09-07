@@ -260,7 +260,6 @@ clf_D = GaussianNB()
 clf_E = RandomForestClassifier(n_estimators=10,max_features= 3, criterion='gini')
 clf_I = MLPClassifier(activation='tanh',alpha=0.01)
 
-clf_H = QuadraticDiscriminantAnalysis()
 
 
 # feature selection     n_feat: Kbest
@@ -276,7 +275,7 @@ clf_H = QuadraticDiscriminantAnalysis()
 # print select_X_train.shape
 
 
-for clf in [ clf_I]:    # clf_A, clf_B, clf_C, clf_D, clf_E,
+for clf in [ clf_A, clf_B, clf_C, clf_D, clf_E, clf_I]:  #
     for size in [400]:
         train_predict(clf, X_train[:size], Y_train[:size], X_test, Y_test)  #select_
         print ' '
